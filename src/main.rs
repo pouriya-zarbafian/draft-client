@@ -24,11 +24,14 @@ fn main() {
 
     let client = Arc::new(client);
 
-    //execute_inserts(client, 1, 6);
+    // First insert values
+    execute_inserts(client, 1, 6);
     //execute_inserts(client, 6, 11);
     //execute_inserts(client, 11, 16);
     //execute_inserts(client, 16, 22);
-    execute_gets(client, 1, 22);
+
+    // Then retrieve inserted values
+    // execute_gets(client, 1, 22);
 
 }
 
