@@ -15,6 +15,9 @@ pub fn deserialize<'a, T: Deserialize<'a>>(json: &'a String) -> Result<T, Box<dy
     }
 }
 
+pub const QUERY_RESULT_SUCCESS: u8 = 0x00;
+pub const QUERY_RESULT_REDIRECT: u8 = 0x01;
+
 pub const MESSAGE_TYPE_CLIENT_REQUEST: u8 = 0x04;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -46,12 +49,12 @@ pub enum Action {
 pub struct Query {
     pub action: Action,
     pub key: String,
-    pub value: String,
+    pub value: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct QueryResult {
     pub error: u8,
     pub message: String,
-    pub value: String,
+    pub value: Option<String>,
 }

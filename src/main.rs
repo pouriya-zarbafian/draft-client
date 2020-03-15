@@ -1,94 +1,44 @@
 mod message;
 mod client;
 
-use rand::Rng;
-
-use crate::message::{ClientRequest, ClientResponse, Query};
 use crate::client::DraftClient;
-use std::sync::Arc;
 
 fn main() {
 
     // Client id requires IP as it is used to bind sockets
     let client_id = String::from("127.0.0.1");
 
-    // Leader id is used to find leader
-    // TODO: handle follower redirection to leader
-    let leader_id = String::from("127.0.0.1:8888");
-
     // List of all servers
     let servers = vec![String::from("127.0.0.1:7777"), String::from("127.0.0.1:8888"), String::from("127.0.0.1:9999")];
 
     // Create client
-    let client = DraftClient::new(client_id, leader_id, servers);
+    let client = DraftClient::new(client_id, servers).unwrap();
 
-    let client = Arc::new(client);
+    let key = String::from("the key");
+    let initial_value = String::from("the initial value");
 
-    // First insert values
-    execute_inserts(client, 1, 6);
-    //execute_inserts(client, 6, 11);
-    //execute_inserts(client, 11, 16);
-    //execute_inserts(client, 16, 22);
+    // Insert a value
+    client.save_value(key.clone(), initial_value.clone());
 
-    // Then retrieve inserted values
-    // execute_gets(client, 1, 22);
+    // Retrieve inserted value
+    let initial_result = client.get_value(key.clone()).unwrap();
 
-}
+    assert_eq!(initial_value, initial_result);
 
-fn execute_inserts(client: Arc<DraftClient>, from: i32, to: i32) {
-    let mut handles = Vec::new();
+    let updated_value = String::from("the updated value");
 
-    for i in from..to {
-        let client = Arc::clone(&client);
+    // Update value
+    client.save_value(key.clone(), updated_value.clone());
 
-        let handle = std::thread::Builder::new()
-            .name(format!("thread {}", i))
-            .spawn(move || {
-                let query = Query {
-                    action: message::Action::Save,
-                    key: i.to_string(),
-                    value: i.to_string().repeat(2)
-                };
+    // Retrieve updated value
+    let updated_result = client.get_value(key.clone()).unwrap();
 
-                let result = client.execute_query(query);
-                println!("Query={} -> Result={}", i, result.message);
+    assert_eq!(updated_value, updated_result);
 
-            })
-            .unwrap();
+    // Delete value
+    client.delete_value(key.clone());
 
-        handles.push(handle);
-    }
+    let deleted_value = client.get_value(key.clone());
 
-    for h in handles {
-        h.join().unwrap();
-    }
-}
-
-fn execute_gets(client: Arc<DraftClient>, from: i32, to: i32) {
-    let mut handles = Vec::new();
-
-    for i in from..to {
-        let client = Arc::clone(&client);
-
-        let handle = std::thread::Builder::new()
-            .name(format!("thread {}", i))
-            .spawn(move || {
-                let query = Query {
-                    action: message::Action::Get,
-                    key: i.to_string(),
-                    value: "".into()
-                };
-
-                let result = client.execute_query(query);
-                println!("Query={} -> Result={:?}", i, result);
-
-            })
-            .unwrap();
-
-        handles.push(handle);
-    }
-
-    for h in handles {
-        h.join().unwrap();
-    }
+    assert_eq!(deleted_value, None);
 }
